@@ -12,14 +12,24 @@
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed/index.ts"
+    "db:seed": "tsx prisma/seed/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:schema": "vitest run prisma/__tests__/schema",
+    "test:seed": "vitest run prisma/__tests__/seed",
+    "test:performance": "vitest run prisma/__tests__/performance",
+    "test:all": "vitest run prisma/__tests__"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.8",
+    "dotenv": "^17.2.3",
     "prisma": "^5.7.0",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.8"
   }
 }
