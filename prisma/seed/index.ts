@@ -7,11 +7,37 @@ import { seedValidationIssues } from './seeders/seed-validation-issues';
 import { seedConfigs } from './seeders/seed-configs';
 import { seedAIDraftSequence } from './seeders/seed-ai-draft-sequence';
 
+/**
+ * Clear existing data in a safe order so the seed is deterministic and idempotent.
+ * Only includes concrete Prisma models to satisfy $transaction requirement.
+ */
+async function clearForSeeding() {
+  // Delete children before parents to respect FK constraints
+  await prisma.$transaction([
+    prisma.validationIssue.deleteMany(),
+    prisma.crossFlowDependency.deleteMany(),
+    prisma.flowTemplateEdge.deleteMany(),
+    prisma.flowTemplateNode.deleteMany(),
+    prisma.workflowDefinition.deleteMany(),
+    prisma.rUPTemplate.deleteMany(),
+    prisma.archivePolicy.deleteMany(),
+    prisma.aIServiceConfig.deleteMany(),
+    prisma.phaseMapping.deleteMany(),
+    prisma.docType.deleteMany(),
+    prisma.user.deleteMany(),
+    prisma.aIDraftSequence.deleteMany(),
+  ]);
+}
+
 async function main() {
   const start = Date.now();
   console.log('🌱 Starting database seed...\n');
 
   try {
+    console.log('🧹 Clearing previous seedable data...');
+    await clearForSeeding();
+    console.log('   ✓ Clean slate ready\n');
+
     console.log('👥 [1/7] Seeding Users...');
     await seedUsers(prisma);
     console.log('   ✓ Users seeded\n');

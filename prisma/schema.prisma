@@ -1,9 +1,8 @@
-// This is your Prisma schema file
-// Learn more: https://pris.ly/d/prisma-schema
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -12,7 +11,7 @@ datasource db {
 }
 
 // ============================================================================
-// ENUMS (Global)
+// Enums
 // ============================================================================
 
 enum Phase {
@@ -20,25 +19,6 @@ enum Phase {
   Elaboration
   Construction
   Transition
-}
-
-enum TemplateCategory {
-  Standard
-  Simplified
-  Agile
-  Custom
-}
-
-enum TemplateStatus {
-  Draft
-  Published
-  Archived
-  ValidationFailed
-}
-
-enum EdgeType {
-  required
-  optional
 }
 
 enum NodeStatus {
@@ -60,6 +40,42 @@ enum AIDraftStatus {
   rejected
 }
 
+enum AlertStatus {
+  pending
+  handled
+  ignored
+  archived
+}
+
+enum EdgeType {
+  required
+  optional
+}
+
+enum TemplateCategory {
+  Standard
+  Simplified
+  Agile
+  Custom
+}
+
+enum TemplateStatus {
+  Draft
+  Published
+  Archived
+  ValidationFailed
+}
+
+enum AlertSource {
+  impact_analysis
+  rollback_detection
+}
+
+enum UpstreamActionType {
+  SupplementNewDocs
+  ReviseExistingDocs
+}
+
 enum DraftGenType {
   initial_draft
   conversation_refinement
@@ -73,29 +89,28 @@ enum TaskStatus {
   failed
 }
 
-enum AlertSource {
-  impact_analysis
-  rollback_detection
-}
-
-enum AlertStatus {
-  pending
-  handled
-  ignored
-  archived
-}
-
-enum UpstreamActionType {
-  SupplementNewDocs
-  ReviseExistingDocs
-}
-
 enum JobStatus {
   scheduled
   running
   completed
   failed
   cancelled
+}
+
+enum UserRole {
+  admin
+  project_manager
+  developer
+  reviewer
+  viewer
+}
+
+enum ConfigDataType {
+  string
+  integer
+  boolean
+  json
+  float
 }
 
 enum IssueSeverity {
@@ -113,134 +128,71 @@ enum IssueType {
   workflow_empty
 }
 
-enum UserRole {
-  admin
-  project_manager
-  developer
-  reviewer
-  viewer
+enum PrerequisiteType {
+  required
+  optional
 }
 
 // ============================================================================
-// TEMPLATE BOUNDED CONTEXT
+// Template BC Models
 // ============================================================================
 
 model RUPTemplate {
-  id                   String                @id @default(uuid())
-  name                 String                @db.VarChar(100)
-  description          String?               @db.Text
-  category             TemplateCategory      @default(Standard)
-  estimatedDuration    String?               @db.VarChar(50)
-  status               TemplateStatus        @default(Draft)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-
-  // Relations
-  config               TemplateConfig?
-  workflows            WorkflowDefinition[]
-  crossFlowDependencies CrossFlowDependency[]
-  validationIssues     ValidationIssue[]
-  projects             Project[]
-  flowInstances        FlowInstance[]
-
-  // Indexes
-  @@index([status])
-  @@index([category])
-  @@index([createdAt])
+  id                     String                   @id @default(uuid())
+  name                   String
+  description            String
+  category               TemplateCategory
+  estimatedDuration      String?
+  status                 TemplateStatus           @default(Draft)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  workflows              WorkflowDefinition[]
+  crossFlowDependencies  CrossFlowDependency[]
+  validationIssues       ValidationIssue[]
+  projects               Project[]
+  flowInstances          FlowInstance[]
 
   @@map("rup_templates")
 }
 
-model TemplateConfig {
-  id                   String       @id @default(uuid())
-  templateId           String       @unique
-  maxDepth             Int          @default(5)
-  autoValidateOnSave   Boolean      @default(true)
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
-
-  // Relations
-  template             RUPTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  @@map("template_configs")
-}
-
-model ValidationIssue {
-  id           String         @id @default(uuid())
-  templateId   String
-  workflowId   String?
-  nodeId       String?
-  severity     IssueSeverity
-  type         IssueType
-  message      String         @db.Text
-  details      Json?
-  createdAt    DateTime       @default(now())
-  resolvedAt   DateTime?
-
-  // Relations
-  template     RUPTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([templateId, resolvedAt])
-  @@index([severity])
-  @@index([type])
-
-  @@map("validation_issues")
-}
-
 model WorkflowDefinition {
-  id                String              @id @default(uuid())
+  id                String              @id
   rupTemplateId     String
-  name              String              @db.VarChar(100)
-  code              String              @db.VarChar(50)
-  priority          Int                 @default(0)
-  estimatedDuration String?             @db.VarChar(50)
-  description       String?             @db.Text
+  rupTemplate       RUPTemplate         @relation(fields: [rupTemplateId], references: [id], onDelete: Cascade)
+  name              String
+  code              String
   phases            Phase[]
+  priority          Int
+  estimatedDuration String?
+  description       String?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
-
-  // Relations
-  rupTemplate       RUPTemplate         @relation(fields: [rupTemplateId], references: [id], onDelete: Cascade)
   nodes             FlowTemplateNode[]
   edges             FlowTemplateEdge[]
-  workflowInstances WorkflowInstance[]
 
-  // Indexes
-  @@index([rupTemplateId])
-  @@index([code])
   @@unique([rupTemplateId, code])
-
   @@map("workflow_definitions")
 }
 
 model FlowTemplateNode {
-  id                    String              @id @default(uuid())
+  id                    String              @id
   workflowDefinitionId  String
+  workflowDefinition    WorkflowDefinition  @relation(fields: [workflowDefinitionId], references: [id], onDelete: Cascade)
   fullId                String              @unique
   docTypeId             String
-  label                 String              @db.VarChar(100)
-  description           String?             @db.Text
+  docType               DocType             @relation(fields: [docTypeId], references: [id])
+  label                 String
+  description           String?
   phase                 Phase
-  workflow              String              @db.VarChar(50)
-  priority              Int                 @default(0)
-  estimatedDuration     String?             @db.VarChar(50)
-  positionX             Int                 @default(0)
-  positionY             Int                 @default(0)
+  workflow              String
+  priority              Int
+  estimatedDuration     String?
+  positionX             Int
+  positionY             Int
   completionCondition   Json
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
-
-  // Relations
-  workflowDefinition    WorkflowDefinition  @relation(fields: [workflowDefinitionId], references: [id], onDelete: Cascade)
-  docType               DocType             @relation(fields: [docTypeId], references: [id])
-  sourceEdges           FlowTemplateEdge[]  @relation("EdgeSource")
-  targetEdges           FlowTemplateEdge[]  @relation("EdgeTarget")
-
-  // Indexes
-  @@index([workflowDefinitionId])
-  @@index([docTypeId])
-  @@index([phase])
+  nodeInstances         NodeInstance[]
 
   @@map("flow_template_nodes")
 }
@@ -248,305 +200,222 @@ model FlowTemplateNode {
 model FlowTemplateEdge {
   id                    String              @id @default(uuid())
   workflowDefinitionId  String
+  workflowDefinition    WorkflowDefinition  @relation(fields: [workflowDefinitionId], references: [id], onDelete: Cascade)
   source                String
   target                String
-  type                  EdgeType            @default(required)
-  label                 String?             @db.VarChar(100)
+  type                  EdgeType
+  label                 String?
   weight                Int                 @default(1)
-  notes                 String?             @db.Text
+  notes                 String?
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
-
-  // Relations
-  workflowDefinition    WorkflowDefinition  @relation(fields: [workflowDefinitionId], references: [id], onDelete: Cascade)
-  sourceNode            FlowTemplateNode    @relation("EdgeSource", fields: [source], references: [fullId], onDelete: Cascade)
-  targetNode            FlowTemplateNode    @relation("EdgeTarget", fields: [target], references: [fullId], onDelete: Cascade)
-
-  // Indexes
-  @@index([workflowDefinitionId])
-  @@index([source])
-  @@index([target])
-  @@index([source, target])
-  @@unique([workflowDefinitionId, source, target])
 
   @@map("flow_template_edges")
 }
 
 model CrossFlowDependency {
-  id                String        @id @default(uuid())
+  id                String      @id @default(uuid())
   rupTemplateId     String
+  rupTemplate       RUPTemplate @relation(fields: [rupTemplateId], references: [id], onDelete: Cascade)
   sourceWorkflowId  String
   sourceNodeId      String
   sourceFullId      String
   targetWorkflowId  String
   targetNodeId      String
   targetFullId      String
-  type              EdgeType      @default(required)
-  displayLabel      String?       @db.VarChar(200)
-  description       String?       @db.Text
-  weight            Int           @default(1)
-  notes             String?       @db.Text
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-
-  // Relations
-  rupTemplate       RUPTemplate   @relation(fields: [rupTemplateId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([rupTemplateId])
-  @@index([sourceFullId])
-  @@index([targetFullId])
-  @@unique([rupTemplateId, sourceFullId, targetFullId])
+  type              EdgeType
+  displayLabel      String?
+  description       String?
+  weight            Int         @default(1)
+  notes             String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   @@map("cross_flow_dependencies")
 }
 
+model ValidationIssue {
+  id          String         @id @default(uuid())
+  templateId  String
+  template    RUPTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  workflowId  String?
+  nodeId      String?
+  severity    IssueSeverity
+  type        IssueType
+  message     String
+  details     Json
+  createdAt   DateTime       @default(now())
+  resolvedAt  DateTime?
+
+  @@index([templateId, severity])
+  @@map("validation_issues")
+}
+
 // ============================================================================
-// PROJECT FLOW BOUNDED CONTEXT
+// ProjectFlow BC Models
 // ============================================================================
 
 model Project {
-  id                String          @id @default(uuid())
-  name              String          @db.VarChar(100)
-  description       String?         @db.Text
-  rupTemplateId     String
-  currentPhase      Phase           @default(Inception)
-  ownerId           String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-
-  // Relations
-  rupTemplate       RUPTemplate     @relation(fields: [rupTemplateId], references: [id])
-  owner             User?           @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  flowInstance      FlowInstance?
-
-  // Indexes
-  @@index([rupTemplateId])
-  @@index([currentPhase])
-  @@index([ownerId])
-  @@index([createdAt])
+  id              String        @id @default(uuid())
+  name            String
+  description     String?
+  rupTemplateId   String
+  rupTemplate     RUPTemplate   @relation(fields: [rupTemplateId], references: [id])
+  currentPhase    Phase
+  ownerId         String?
+  owner           User?         @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  flowInstances   FlowInstance[]
 
   @@map("projects")
 }
 
 model FlowInstance {
-  id                String              @id @default(uuid())
-  projectId         String              @unique
-  rupTemplateId     String
-  createdAt         DateTime            @default(now())
-
-  // Relations
-  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  rupTemplate       RUPTemplate         @relation(fields: [rupTemplateId], references: [id])
-  workflowInstances WorkflowInstance[]
-
-  // Indexes
-  @@index([rupTemplateId])
+  id                  String              @id @default(uuid())
+  projectId           String
+  project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rupTemplateId       String
+  rupTemplate         RUPTemplate         @relation(fields: [rupTemplateId], references: [id])
+  createdAt           DateTime            @default(now())
+  workflowInstances   WorkflowInstance[]
 
   @@map("flow_instances")
 }
 
 model WorkflowInstance {
-  id                    String              @id @default(uuid())
+  id                    String        @id @default(uuid())
   flowInstanceId        String
+  flowInstance          FlowInstance  @relation(fields: [flowInstanceId], references: [id], onDelete: Cascade)
   workflowDefinitionId  String
-  workflowName          String              @db.VarChar(100)
-  workflowCode          String              @db.VarChar(50)
-  totalNodes            Int                 @default(0)
-  completedNodes        Int                 @default(0)
-  createdAt             DateTime            @default(now())
-
-  // Relations
-  flowInstance          FlowInstance        @relation(fields: [flowInstanceId], references: [id], onDelete: Cascade)
-  workflowDefinition    WorkflowDefinition  @relation(fields: [workflowDefinitionId], references: [id])
+  workflowName          String
+  workflowCode          String
+  totalNodes            Int           @default(0)
+  completedNodes        Int           @default(0)
+  createdAt             DateTime      @default(now())
   nodeInstances         NodeInstance[]
-
-  // Indexes
-  @@index([flowInstanceId])
-  @@index([workflowDefinitionId])
 
   @@map("workflow_instances")
 }
 
 model NodeInstance {
-  id                        String              @id @default(uuid())
-  workflowInstanceId        String
-  templateNodeId            String
-  fullTemplateNodeId        String
-  docTypeId                 String
-  label                     String              @db.VarChar(100)
-  description               String?             @db.Text
-  phase                     Phase
-  priority                  Int                 @default(0)
-  status                    NodeStatus          @default(locked)
-  documentIds               String[]
-  documentCount             Int                 @default(0)
-  completedDocumentCount    Int                 @default(0)
+  id                          String                        @id @default(uuid())
+  workflowInstanceId          String
+  workflowInstance            WorkflowInstance              @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+  templateNodeId              String
+  templateNode                FlowTemplateNode              @relation(fields: [templateNodeId], references: [id])
+  fullTemplateNodeId          String
+  docTypeId                   String
+  label                       String
+  description                 String?
+  phase                       Phase
+  priority                    Int
+  status                      NodeStatus                    @default(locked)
+  documentIds                 String[]
+  documentCount               Int                           @default(0)
+  completedDocumentCount      Int                           @default(0)
   completionConditionSnapshot Json
-  startedAt                 DateTime?
-  completedAt               DateTime?
-  createdAt                 DateTime            @default(now())
-
-  // Relations
-  workflowInstance          WorkflowInstance    @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
-  docType                   DocType             @relation(fields: [docTypeId], references: [id])
-  prerequisites             Prerequisite[]      @relation("NodePrerequisites")
-  dependentNodes            Prerequisite[]      @relation("PrerequisiteOf")
-  documents                 Document[]
-  regenerationAlerts        RegenerationAlert[]
-  upstreamAlerts            UpstreamClarificationAlert[]
-
-  // Indexes
-  @@index([workflowInstanceId])
-  @@index([status])
-  @@index([docTypeId])
-  @@index([fullTemplateNodeId])
+  startedAt                   DateTime?
+  completedAt                 DateTime?
+  createdAt                   DateTime                      @default(now())
+  documents                   Document[]
+  prerequisites               Prerequisite[]                @relation("NodePrerequisites")
+  dependentNodes              Prerequisite[]                @relation("PrerequisiteNode")
+  regenerationAlerts          RegenerationAlert[]
+  upstreamAlerts              UpstreamClarificationAlert[]
 
   @@map("node_instances")
 }
 
 model Prerequisite {
-  id                        String        @id @default(uuid())
+  id                        String          @id @default(uuid())
   nodeInstanceId            String
+  nodeInstance              NodeInstance    @relation("NodePrerequisites", fields: [nodeInstanceId], references: [id], onDelete: Cascade)
   prerequisiteNodeInstanceId String
+  prerequisiteNode          NodeInstance    @relation("PrerequisiteNode", fields: [prerequisiteNodeInstanceId], references: [id], onDelete: Cascade)
   fullTemplateNodeId        String
-  satisfied                 Boolean       @default(false)
-  type                      EdgeType      @default(required)
-  createdAt                 DateTime      @default(now())
-
-  // Relations
-  nodeInstance              NodeInstance  @relation("NodePrerequisites", fields: [nodeInstanceId], references: [id], onDelete: Cascade)
-  prerequisiteNode          NodeInstance  @relation("PrerequisiteOf", fields: [prerequisiteNodeInstanceId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([nodeInstanceId])
-  @@index([prerequisiteNodeInstanceId])
-  @@unique([nodeInstanceId, prerequisiteNodeInstanceId])
+  satisfied                 Boolean         @default(false)
+  type                      PrerequisiteType
+  createdAt                 DateTime        @default(now())
 
   @@map("prerequisites")
 }
 
 // ============================================================================
-// DOCUMENTING BOUNDED CONTEXT
+// Documenting BC Models
 // ============================================================================
 
 model Document {
   id                String              @id @default(uuid())
   nodeInstanceId    String
-  name              String              @db.VarChar(200)
-  content           String              @db.Text @default("")
+  nodeInstance      NodeInstance        @relation(fields: [nodeInstanceId], references: [id], onDelete: Cascade)
+  name              String
+  content           String
   status            DocumentStatus      @default(draft)
-  currentVersion    String?             @db.VarChar(20)
-  inputDocuments    Json                @db.JsonB @default(dbgenerated("'[]'::jsonb"))
+  currentVersion    String?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   createdBy         String?
+  createdByUser     User?               @relation("DocumentCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   lastModifiedBy    String?
-
-  // Relations
-  nodeInstance      NodeInstance        @relation(fields: [nodeInstanceId], references: [id], onDelete: Cascade)
-  creator           User?               @relation("DocumentCreator", fields: [createdBy], references: [id], onDelete: SetNull)
-  modifier          User?               @relation("DocumentModifier", fields: [lastModifiedBy], references: [id], onDelete: SetNull)
+  lastModifiedByUser User?              @relation("DocumentLastModifiedBy", fields: [lastModifiedBy], references: [id], onDelete: SetNull)
   versions          DocumentVersion[]
   aiDrafts          AIDraft[]
   conversationSessions ConversationSession[]
-
-  // Indexes
-  @@index([nodeInstanceId])
-  @@index([status])
-  @@index([createdBy])
-  @@index([lastModifiedBy])
-  @@index([createdAt])
 
   @@map("documents")
 }
 
 model DocumentVersion {
-  id                String        @id @default(uuid())
-  documentId        String
-  version           String        @db.VarChar(20)
-  content           String        @db.Text
-  summary           String        @db.Text
-  aiDraftId         String?
-  triggeredBy       Json          @default("[]")
-  isRollback        Boolean       @default(false)
-  rollbackFrom      String?       @db.VarChar(20)
-  rollbackChain     Json?
-  skipImpactAnalysis Boolean      @default(false)
-  createdAt         DateTime      @default(now())
+  id                    String    @id @default(uuid())
+  documentId            String
+  document              Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version               String
+  content               String
+  summary               String?
+  aiDraftId             String?
+  isRollback            Boolean   @default(false)
+  skipImpactAnalysis    Boolean   @default(false)
+  createdAt             DateTime  @default(now())
 
-  // Relations
-  document          Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([documentId])
-  @@index([version])
-  @@index([createdAt])
   @@unique([documentId, version])
-
   @@map("document_versions")
 }
 
 model AIDraft {
   id                    String              @id
   documentId            String
-  name                  String              @db.VarChar(200)
+  document              Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  name                  String
   status                AIDraftStatus       @default(pending)
-  content               String              @db.Text
-  conversationSessionId String
-  autoGenerated         Boolean             @default(false)
-  rejectionReason       String?             @db.Text
+  content               String
+  conversationSessionId String?
+  conversationSession   ConversationSession? @relation(fields: [conversationSessionId], references: [id], onDelete: SetNull)
+  autoGenerated         Boolean             @default(true)
+  rejectionReason       String?
   rejectedBy            String?
-  associatedVersions    String[]            @default([])
+  associatedVersions    String[]
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
   acceptedAt            DateTime?
   rejectedAt            DateTime?
 
-  // Relations
-  document              Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  conversationSession   ConversationSession @relation(fields: [conversationSessionId], references: [id])
-  rejecter              User?               @relation("DraftRejecter", fields: [rejectedBy], references: [id], onDelete: SetNull)
-  generationMeta        DraftGenerationMeta?
-
-  // Indexes
-  @@index([documentId])
-  @@index([status])
-  @@index([conversationSessionId])
-  @@index([rejectedBy])
-  @@index([documentId, status])
-  @@index([createdAt])
-
   @@map("ai_drafts")
 }
 
-model AIDraftSequence {
-  id          String   @id @default("global")
-  nextNumber  BigInt   @default(1)
-  lastUpdated DateTime @updatedAt
-
-  @@map("ai_draft_sequence")
-}
-
 model ConversationSession {
-  id                    String              @id @default(uuid())
-  documentId            String
-  name                  String              @db.VarChar(100)
-  aiRole                String              @db.VarChar(100)
-  backgroundTaskStatus  String              @default("idle")
-  lastGeneratedAt       DateTime?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-
-  // Relations
-  document              Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  messages              AIMessage[]
-  aiDrafts              AIDraft[]
-  backgroundTasks       BackgroundGenerationTask[]
-
-  // Indexes
-  @@index([documentId])
-  @@index([createdAt])
+  id                      String                      @id @default(uuid())
+  documentId              String
+  document                Document                    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  name                    String
+  aiRole                  String
+  backgroundTaskStatus    String?
+  lastGeneratedAt         DateTime?
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+  messages                AIMessage[]
+  aiDrafts                AIDraft[]
+  backgroundTasks         BackgroundGenerationTask[]
 
   @@map("conversation_sessions")
 }
@@ -554,259 +423,205 @@ model ConversationSession {
 model AIMessage {
   id                    String              @id @default(uuid())
   conversationSessionId String
-  role                  String              @db.VarChar(20)
-  content               String              @db.Text
+  conversationSession   ConversationSession @relation(fields: [conversationSessionId], references: [id], onDelete: Cascade)
+  role                  String
+  content               String
   timestamp             DateTime            @default(now())
 
-  // Relations
-  conversationSession   ConversationSession @relation(fields: [conversationSessionId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([conversationSessionId])
-  @@index([timestamp])
-
   @@map("ai_messages")
-}
-
-model DraftGenerationMeta {
-  id                    String              @id @default(uuid())
-  draftId               String              @unique
-  conversationSessionId String
-  type                  DraftGenType
-  inputDocuments        Json                @default("[]")
-  createdAt             DateTime            @default(now())
-
-  // Relations
-  draft                 AIDraft             @relation(fields: [draftId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([type])
-  @@index([createdAt])
-
-  @@map("draft_generation_meta")
 }
 
 model BackgroundGenerationTask {
   id                    String              @id @default(uuid())
   conversationSessionId String
-  triggeredBy           String              @db.VarChar(50)
-  triggerMessage        String              @db.Text
+  conversationSession   ConversationSession @relation(fields: [conversationSessionId], references: [id], onDelete: Cascade)
+  triggeredBy           String
+  triggerMessage        String
   status                TaskStatus          @default(pending)
-  generatedDraftIds     String[]            @default([])
+  generatedDraftIds     String[]
+  errorMessage          String?
   createdAt             DateTime            @default(now())
   completedAt           DateTime?
-  errorMessage          String?             @db.Text
-
-  // Relations
-  conversationSession   ConversationSession @relation(fields: [conversationSessionId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([conversationSessionId])
-  @@index([status])
-  @@index([createdAt])
 
   @@map("background_generation_tasks")
 }
 
+model AIDraftSequence {
+  id          String   @id
+  nextNumber  BigInt   @default(1)
+  lastUpdated DateTime @default(now()) @updatedAt
+
+  @@map("ai_draft_sequences")
+}
+
 // ============================================================================
-// IMPACT ALERT BOUNDED CONTEXT
+// ImpactAlert BC Models
 // ============================================================================
 
 model RegenerationAlert {
-  id                String        @id @default(uuid())
-  nodeId            String
-  triggeredBy       Json
-  changes           Json
-  affectedDocuments Json
-  impactAssessment  Json?
-  createdBy         AlertSource   @default(impact_analysis)
-  status            AlertStatus   @default(pending)
-  createdAt         DateTime      @default(now())
-  handledAt         DateTime?
-  ignoredAt         DateTime?
-  ignoreReason      String?       @db.Text
-  restoredAt        DateTime?
-
-  // Relations
-  node              NodeInstance  @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([nodeId])
-  @@index([status])
-  @@index([createdAt])
+  id          String        @id @default(uuid())
+  nodeId      String
+  node        NodeInstance  @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  createdBy   AlertSource
+  status      AlertStatus   @default(pending)
+  createdAt   DateTime      @default(now())
+  handledAt   DateTime?
+  ignoredAt   DateTime?
+  ignoreReason String?
+  restoredAt  DateTime?
 
   @@map("regeneration_alerts")
 }
 
 model UpstreamClarificationAlert {
-  id                String              @id @default(uuid())
-  nodeId            String
-  actionType        UpstreamActionType
-  triggeredBy       Json
-  suggestedDocuments Json?
-  affectedDocuments Json?
-  issueType         String?             @db.VarChar(50)
-  description       String              @db.Text
-  suggestions       String              @db.Text
-  impactAssessment  Json?
-  status            AlertStatus         @default(pending)
-  createdAt         DateTime            @default(now())
-  handledAt         DateTime?
-  ignoredAt         DateTime?
-  ignoreReason      String?             @db.Text
-  restoredAt        DateTime?
-
-  // Relations
-  node              NodeInstance        @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([nodeId])
-  @@index([status])
-  @@index([actionType])
-  @@index([createdAt])
+  id          String              @id @default(uuid())
+  nodeId      String
+  node        NodeInstance        @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  actionType  UpstreamActionType
+  status      AlertStatus         @default(pending)
+  createdAt   DateTime            @default(now())
+  handledAt   DateTime?
+  ignoredAt   DateTime?
+  ignoreReason String?
+  restoredAt  DateTime?
 
   @@map("upstream_clarification_alerts")
 }
 
 // ============================================================================
-// GOVERNANCE BOUNDED CONTEXT
+// Governance / Config BC Models
 // ============================================================================
 
 model DocType {
-  id                String              @id @db.VarChar(50)
-  name              String              @db.VarChar(100)
-  code              String              @db.VarChar(50)
-  workflow          String              @db.VarChar(100)
-  category          String              @db.VarChar(50)
-  description       String?             @db.Text
-  template          String?             @db.Text
-  supportedFormats  String[]            @default(["markdown"])
-  systemPrompt      String              @db.Text
-  group             String?             @db.VarChar(50)
-  priority          Int                 @default(0)
-  isRequired        Boolean             @default(false)
-  isActive          Boolean             @default(true)
-  phases            Phase[]
-  sourcesDocTypes   String[]            @default([])
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  // Relations
-  templateNodes     FlowTemplateNode[]
-  nodeInstances     NodeInstance[]
-
-  // Indexes
-  @@index([workflow])
-  @@index([category])
-  @@index([isActive])
-  @@unique([code])
+  id               String   @id
+  name             String
+  code             String   @unique
+  workflow         String
+  category         String
+  description      String
+  template         String?
+  supportedFormats String[]
+  systemPrompt     String
+  group            String?
+  priority         Int
+  isRequired       Boolean
+  isActive         Boolean
+  phases           Phase[]
+  sourcesDocTypes  String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  flowTemplateNodes FlowTemplateNode[]
 
   @@map("doc_types")
 }
-
 model PhaseMapping {
-  id             String   @id @default(uuid())
-  workflowCode   String   @unique
-  allowedPhases  Phase[]
-  description    String?  @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([workflowCode])
+  id            String   @id @default(uuid())
+  workflowCode  String   @unique
+  allowedPhases Phase[]
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("phase_mappings")
 }
 
-model User {
-  id            String    @id @default(uuid())
-  username      String    @unique @db.VarChar(50)
-  email         String    @unique @db.VarChar(100)
-  fullName      String    @db.VarChar(100)
-  role          UserRole  @default(developer)
-  department    String?   @db.VarChar(100)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  lastLoginAt   DateTime?
-
-  // Relations
-  ownedProjects         Project[]   @relation("ProjectOwner")
-  createdDocuments      Document[]  @relation("DocumentCreator")
-  modifiedDocuments     Document[]  @relation("DocumentModifier")
-  rejectedDrafts        AIDraft[]   @relation("DraftRejecter")
-
-  // Indexes
-  @@index([email])
-  @@index([isActive])
-  @@index([role])
-  @@index([isActive, role])
-
-  @@map("users")
-}
-
 model AIServiceConfig {
-  id                String        @id @default(uuid())
-  name              String        @db.VarChar(100)
-  provider          String        @db.VarChar(50)
-  model             String        @db.VarChar(100)
-  apiKey            String        @db.VarChar(500)
-  apiEndpoint       String        @db.VarChar(500)
-  temperature       Float         @default(0.7)
-  maxTokens         Int           @default(4000)
-  timeoutMs         Int           @default(60000)
-  retryMaxAttempts  Int           @default(3)
-  retryDelayMs      Int           @default(1000)
-  isActive          Boolean       @default(true)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-
-  // Indexes
-  @@index([isActive])
+  id                String   @id @default(uuid())
+  name              String
+  provider          String
+  model             String
+  apiKey            String
+  apiEndpoint       String
+  temperature       Float    @default(0.7)
+  maxTokens         Int      @default(4000)
+  timeoutMs         Int      @default(60000)
+  retryMaxAttempts  Int      @default(3)
+  retryDelayMs      Int      @default(1000)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("ai_service_configs")
 }
 
 model ArchivePolicy {
-  id                        String        @id @default(uuid())
-  name                      String        @db.VarChar(100)
-  archiveDaysAfterHandled   Int           @default(30)
-  archiveDaysAfterIgnored   Int           @default(30)
-  cronExpression            String        @db.VarChar(100)
-  batchSize                 Int           @default(100)
-  isActive                  Boolean       @default(true)
-  retentionDays             Int           @default(365)
-  deleteAfterArchive        Boolean       @default(false)
-  createdAt                 DateTime      @default(now())
-  updatedAt                 DateTime      @updatedAt
-
-  // Relations
-  archiveJobs               ArchiveJob[]
-
-  // Indexes
-  @@index([isActive])
+  id                      String       @id @default(uuid())
+  name                    String
+  archiveDaysAfterHandled Int          @default(30)
+  archiveDaysAfterIgnored Int          @default(30)
+  cronExpression          String       @default("0 2 * * *")
+  batchSize               Int          @default(100)
+  isActive                Boolean      @default(true)
+  retentionDays           Int          @default(365)
+  deleteAfterArchive      Boolean      @default(false)
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  archiveJobs             ArchiveJob[]
 
   @@map("archive_policies")
 }
 
 model ArchiveJob {
-  id                String          @id @default(uuid())
-  policyId          String
-  status            JobStatus       @default(scheduled)
-  startedAt         DateTime?
-  completedAt       DateTime?
-  processedCount    Int             @default(0)
-  archivedCount     Int             @default(0)
-  errorCount        Int             @default(0)
-  errorMessage      String?         @db.Text
-  nextScheduledAt   DateTime?
-
-  // Relations
-  policy            ArchivePolicy   @relation(fields: [policyId], references: [id])
-
-  // Indexes
-  @@index([policyId])
-  @@index([status])
-  @@index([nextScheduledAt])
+  id              String    @id @default(uuid())
+  policyId        String
+  policy          ArchivePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  status          JobStatus @default(scheduled)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  processedCount  Int       @default(0)
+  archivedCount   Int       @default(0)
+  errorCount      Int       @default(0)
+  errorMessage    String?
+  nextScheduledAt DateTime?
+  createdAt       DateTime  @default(now())
 
   @@map("archive_jobs")
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  username              String    @unique
+  email                 String    @unique
+  fullName              String
+  role                  UserRole
+  department            String?
+  isActive              Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  lastLoginAt           DateTime?
+  projects              Project[]
+  createdDocuments      Document[] @relation("DocumentCreatedBy")
+  lastModifiedDocuments Document[] @relation("DocumentLastModifiedBy")
+
+  @@map("users")
+}
+
+model SystemConfig {
+  id          String          @id @default(uuid())
+  key         String          @unique
+  value       String
+  dataType    ConfigDataType
+  category    String?
+  description String?
+  isEditable  Boolean         @default(true)
+  updatedAt   DateTime        @updatedAt
+  updatedBy   String?
+
+  @@map("system_configs")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  oldValue   String?
+  newValue   String?
+  ipAddress  String?
+  timestamp  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }

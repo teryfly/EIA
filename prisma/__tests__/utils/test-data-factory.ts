@@ -1,10 +1,8 @@
 import { PrismaClient, Phase, UserRole } from '@prisma/client';
 import { getPrisma } from './test-helpers';
-
-function uniqSuffix() {
+function uniqSuffix(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
-
 export async function createTestUser(overrides?: Partial<{
   username: string;
   email: string;
@@ -24,7 +22,6 @@ export async function createTestUser(overrides?: Partial<{
   });
   return user;
 }
-
 export async function createTestDocType(overrides?: Partial<{
   id: string;
   name: string;
@@ -33,7 +30,6 @@ export async function createTestDocType(overrides?: Partial<{
   code: string;
 }>): Promise<{ id: string }> {
   const prisma = getPrisma();
-
   const tryCreate = async (): Promise<{ id: string }> => {
     const suf = uniqSuffix();
     const id = overrides?.id || `test-doctype-${suf}`;
@@ -56,7 +52,6 @@ export async function createTestDocType(overrides?: Partial<{
       } as any,
     });
   };
-
   // Retry a few times to avoid extremely rare collisions across parallel forks
   const maxAttempts = 5;
   let lastErr: any;
@@ -74,19 +69,23 @@ export async function createTestDocType(overrides?: Partial<{
   }
   throw lastErr;
 }
-
-export async function createTestRUPTemplate(): Promise<{ id: string }> {
+export async function createTestRUPTemplate(overrides?: Partial<{
+  name: string;
+  description: string;
+  category: string;
+  status: string;
+}>): Promise<{ id: string }> {
   const prisma = getPrisma();
   const template = await prisma.rUPTemplate.create({
     data: {
-      name: `Test Template ${uniqSuffix()}`,
-      category: 'Custom' as any,
-      status: 'Draft' as any,
+      name: overrides?.name || `Test Template ${uniqSuffix()}`,
+      description: overrides?.description || 'Test RUP Template for automated testing',
+      category: (overrides?.category as any) || 'Custom',
+      status: (overrides?.status as any) || 'Draft',
     },
   });
   return template;
 }
-
 export async function createTestProject(
   rupTemplateId: string,
   ownerId?: string

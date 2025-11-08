@@ -7,36 +7,50 @@ export function getPrisma(): PrismaClient {
 
 export async function clearDatabase(): Promise<void> {
   const prisma = getPrisma();
+
+  // Clear core models in a single transaction using only Prisma Client promises
   await prisma.$transaction([
     prisma.validationIssue.deleteMany(),
-    (prisma as any).prerequisite?.deleteMany?.(),
-    (prisma as any).backgroundGenerationTask?.deleteMany?.(),
-    (prisma as any).draftGenerationMeta?.deleteMany?.(),
-    (prisma as any).aIMessage?.deleteMany?.(),
-    (prisma as any).aIDraft?.deleteMany?.(),
-    (prisma as any).conversationSession?.deleteMany?.(),
-    (prisma as any).documentVersion?.deleteMany?.(),
-    (prisma as any).document?.deleteMany?.(),
-    (prisma as any).nodeInstance?.deleteMany?.(),
-    (prisma as any).workflowInstance?.deleteMany?.(),
-    (prisma as any).flowInstance?.deleteMany?.(),
-    (prisma as any).project?.deleteMany?.(),
-    (prisma as any).regenerationAlert?.deleteMany?.(),
-    (prisma as any).upstreamClarificationAlert?.deleteMany?.(),
     prisma.crossFlowDependency.deleteMany(),
     prisma.flowTemplateEdge.deleteMany(),
     prisma.flowTemplateNode.deleteMany(),
     prisma.workflowDefinition.deleteMany(),
-    (prisma as any).templateConfig?.deleteMany?.(),
     prisma.rUPTemplate.deleteMany(),
-    (prisma as any).archiveJob?.deleteMany?.(),
     prisma.archivePolicy.deleteMany(),
     prisma.aIServiceConfig.deleteMany(),
     prisma.phaseMapping.deleteMany(),
     prisma.docType.deleteMany(),
     prisma.user.deleteMany(),
     prisma.aIDraftSequence.deleteMany(),
-  ] as any);
+  ]);
+
+  // Best-effort clean-up of optional models, executed sequentially
+  const maybeDelete = async (modelName: string) => {
+    const model = (prisma as any)[modelName];
+    if (model && typeof model.deleteMany === 'function') {
+      try {
+        await model.deleteMany();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  await maybeDelete('prerequisite');
+  await maybeDelete('backgroundGenerationTask');
+  await maybeDelete('draftGenerationMeta');
+  await maybeDelete('aIMessage');
+  await maybeDelete('aIDraft');
+  await maybeDelete('conversationSession');
+  await maybeDelete('documentVersion');
+  await maybeDelete('document');
+  await maybeDelete('nodeInstance');
+  await maybeDelete('workflowInstance');
+  await maybeDelete('flowInstance');
+  await maybeDelete('templateConfig');
+  await maybeDelete('archiveJob');
+  await maybeDelete('regenerationAlert');
+  await maybeDelete('upstreamClarificationAlert');
 }
 
 export async function runSeed(): Promise<void> {
