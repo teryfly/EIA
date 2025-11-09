@@ -48,7 +48,8 @@ describe('shared/types/enums - guards and helpers', () => {
     expect(isEdgeType(EdgeType.required)).toBe(true);
     expect(isEdgeType('optionalish' as any)).toBe(false);
 
-    expect(isAlertStatus(AlertStatus.open)).toBe(true);
+    // Align with Prisma enum values: pending, handled, ignored, archived
+    expect(isAlertStatus(AlertStatus.pending)).toBe(true);
     expect(isAlertStatus(undefined as any)).toBe(false);
 
     expect(isImpactLevel(ImpactLevel.major)).toBe(true);
