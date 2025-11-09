@@ -19,8 +19,9 @@
     "test:schema": "vitest run prisma/__tests__/schema",
     "test:seed": "vitest run prisma/__tests__/seed",
     "test:performance": "vitest run prisma/__tests__/performance",
-    "test:all": "vitest run prisma/__tests__",
-    "test:shared": "vitest run src/shared/__tests__",
+    "test:M01": "vitest run --dir prisma",
+    "test:M02": "vitest run --dir src/shared",
+    "test:M03A": "vitest run --dir src/modules/template",
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
