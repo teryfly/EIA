@@ -8,3 +8,7 @@ yarn-error.log*
 coverage
 .vitest
 .vscode
+__tests__
+.idea
+coverage
+*.log

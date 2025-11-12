@@ -6,9 +6,7 @@
 // ============================================================================
 // Enums
 // ============================================================================
-
 export {
-  // Prisma enums
   Phase,
   NodeStatus,
   DocumentStatus,
@@ -27,11 +25,9 @@ export {
   IssueSeverity,
   IssueType,
   PrerequisiteType,
-  // Application enums
   ImpactLevel,
   AlertIssueType,
   SourceRelationship,
-  // Type guards
   isPhase,
   isNodeStatus,
   isDocumentStatus,
@@ -44,7 +40,6 @@ export {
   isIssueType,
   isPrerequisiteType,
   isSourceRelationship,
-  // Helper functions
   PhaseOrder,
   comparePhases,
   NodeStatusOrder,
@@ -54,48 +49,38 @@ export {
 // ============================================================================
 // Common Types
 // ============================================================================
-
 export {
-  // Branded ID types
   type ProjectId,
   type NodeInstanceId,
   type DocumentId,
   type TemplateId,
   type WorkflowId,
   type UserId,
-  // ID creation functions
   createProjectId,
   createNodeInstanceId,
   createDocumentId,
   createTemplateId,
   createWorkflowId,
   createUserId,
-  // UUID validation
   isUUID,
-  // Type aliases
   type UUID,
   type Timestamp,
   type JSONValue,
   type JSONObject,
   type JSONArray,
-  // Pagination
   type PaginationParams,
   type PaginatedResult,
-  // Validation & Response
   type ValidationResult,
   type SuccessResponse,
   type ErrorResponse,
   type ErrorDetail,
   type ApiResponse,
-  // Type guards
   isSuccessResponse,
   isErrorResponse,
   isValidationSuccess,
   isValidationFailure,
-  // Factory functions
   createSuccessResponse,
   createErrorResponse,
-  // Filters
   type DateRangeFilter,
   type SearchFilter,
 } from './types/common';
@@ -103,9 +88,7 @@ export {
 // ============================================================================
 // Value Objects
 // ============================================================================
-
 export {
-  // CompletionCondition
   type CompletionConditionBase,
   type ManualConfirmCondition,
   type MinDocumentsCondition,
@@ -128,7 +111,6 @@ export {
 } from './types/value-objects/completion-condition';
 
 export {
-  // Prerequisite
   type Prerequisite,
   PrerequisiteSchema,
   isPrerequisite,
@@ -140,7 +122,6 @@ export {
 } from './types/value-objects/prerequisite';
 
 export {
-  // TriggerSource
   type TriggerSource,
   TriggerSourceSchema,
   isTriggerSource,
@@ -151,7 +132,6 @@ export {
 } from './types/value-objects/trigger-source';
 
 export {
-  // ImpactAssessment
   type AssessedDocument,
   type AssessedNode,
   type ImpactAssessment,
@@ -171,7 +151,6 @@ export {
 } from './types/value-objects/impact-assessment';
 
 export {
-  // InputDocumentRef
   type InputDocumentRef,
   InputDocumentRefSchema,
   isInputDocumentRef,
@@ -179,7 +158,6 @@ export {
 } from './types/value-objects/input-document-ref';
 
 export {
-  // ValidationIssue
   type ValidationIssue,
   ValidationIssueSchema,
   isValidationIssue,
@@ -190,7 +168,6 @@ export {
 } from './types/value-objects/validation-issue';
 
 export {
-  // BackgroundGenerationTask
   type BackgroundGenerationTask,
   BackgroundGenerationTaskSchema,
   isBackgroundGenerationTask,
@@ -200,3 +177,25 @@ export {
   isFailed,
   getTaskDuration,
 } from './types/value-objects/background-generation-task';
+
+// ============================================================================
+// Graph Utilities (M03B-1)
+// ============================================================================
+export {
+  type GraphEdge,
+  type CycleDetectionResult,
+  buildAdjacencyList,
+  buildWeightedAdjacencyList,
+  detectCycle,
+  wouldCreateCycle,
+  findAllPaths,
+  getDownstreamNodes,
+  getUpstreamNodes,
+  topologicalSort,
+  hasPath,
+  getStronglyConnectedComponents,
+  countNodes,
+  countEdges,
+  findSourceNodes,
+  findSinkNodes
+} from './utils/graph-utils';

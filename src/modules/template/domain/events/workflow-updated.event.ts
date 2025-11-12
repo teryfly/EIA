@@ -1,5 +1,6 @@
 export class WorkflowUpdatedEvent {
   public readonly occurredAt: Date;
+  public readonly eventType = 'WorkflowUpdated';
 
   constructor(
     public readonly workflowId: string,
@@ -10,7 +11,7 @@ export class WorkflowUpdatedEvent {
 
   toJSON() {
     return {
-      eventType: 'WorkflowUpdated',
+      eventType: this.eventType,
       workflowId: this.workflowId,
       templateId: this.templateId,
       occurredAt: this.occurredAt.toISOString(),

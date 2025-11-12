@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import path from 'path';
-
+import tsconfigPaths from 'vite-tsconfig-paths';
 /**
  * Note:
  * - We keep a broad include that covers all test roots.
@@ -9,6 +8,7 @@ import path from 'path';
  *   generic patterns for any __tests__ under the working dir.
  */
 export default defineConfig({
+  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     environment: 'node',
@@ -21,13 +21,6 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       reportsDirectory: 'coverage'
-    }
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-      '@/shared': path.resolve(__dirname, 'src/shared'),
-      '@/prisma': path.resolve(__dirname, 'prisma')
     }
   }
 });

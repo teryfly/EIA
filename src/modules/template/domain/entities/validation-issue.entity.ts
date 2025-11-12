@@ -99,6 +99,31 @@ export class ValidationIssueEntity {
     );
   }
 
+  static createCircularDependency(
+    templateId: string,
+    cyclePath: string[],
+    nodeLabels?: Map<string, string>
+  ): ValidationIssueEntity {
+    const readable = nodeLabels ? cyclePath.map((f) => nodeLabels.get(f) || f) : cyclePath;
+    const pathDisplay = readable.join(' → ');
+    return new ValidationIssueEntity(
+      globalThis.crypto?.randomUUID ? crypto.randomUUID() : require('crypto').randomUUID(),
+      templateId,
+      null,
+      null,
+      IssueSeverity.error,
+      IssueType.circular_dependency,
+      `Circular dependency detected: ${pathDisplay}`,
+      {
+        cyclePath,
+        readablePath: readable.map(String),
+        cycleLength: cyclePath.length
+      },
+      new Date(),
+      null
+    );
+  }
+
   static fromPrisma(prisma: PrismaValidationIssue): ValidationIssueEntity {
     return new ValidationIssueEntity(
       prisma.id,

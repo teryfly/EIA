@@ -21,7 +21,7 @@
     "test:performance": "vitest run prisma/__tests__/performance",
     "test:M01": "vitest run --dir prisma",
     "test:M02": "vitest run --dir src/shared --coverage",
-    "test:M03A": "vitest run --dir src/modules/template --coverage",
+    "test:M03": "vitest run --dir src/modules/template --coverage",
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {

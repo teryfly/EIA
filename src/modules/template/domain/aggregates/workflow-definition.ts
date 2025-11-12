@@ -68,22 +68,41 @@ export class WorkflowDefinition {
     priority?: number;
     phases?: Phase[];
   }): void {
-    if (data.name !== undefined) {
+    let changed = false;
+
+    if (data.name !== undefined && data.name !== this.name) {
       this.validateName(data.name);
       this.name = data.name;
+      changed = true;
     }
-    if (data.description !== undefined) this.description = data.description;
-    if (data.estimatedDuration !== undefined) this.estimatedDuration = data.estimatedDuration;
-    if (data.priority !== undefined) {
+    if (data.description !== undefined && data.description !== this.description) {
+      this.description = data.description;
+      changed = true;
+    }
+    if (data.estimatedDuration !== undefined && data.estimatedDuration !== this.estimatedDuration) {
+      this.estimatedDuration = data.estimatedDuration;
+      changed = true;
+    }
+    if (data.priority !== undefined && data.priority !== this.priority) {
       if (data.priority < 0) throw new Error('Priority must be non-negative');
       this.priority = data.priority;
+      changed = true;
     }
     if (data.phases !== undefined) {
-      this.phases = data.phases;
-      this.validatePhases();
+      const sameLength = data.phases.length === this.phases.length;
+      const sameValues =
+        sameLength && data.phases.every((p, idx) => p === this.phases[idx]);
+      if (!sameValues) {
+        this.phases = data.phases;
+        this.validatePhases();
+        changed = true;
+      }
     }
-    this.updatedAt = new Date();
-    this.addDomainEvent(new WorkflowUpdatedEvent(this.id, this.rupTemplateId));
+
+    if (changed) {
+      this.updatedAt = new Date();
+      this.addDomainEvent(new WorkflowUpdatedEvent(this.id, this.rupTemplateId));
+    }
   }
 
   isPhaseAllowed(phase: Phase): boolean {
